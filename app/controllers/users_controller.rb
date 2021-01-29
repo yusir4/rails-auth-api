@@ -1,6 +1,6 @@
 class UsersController < ApplicationController
 
-  before_action :authorized, only: [:index, :show, :update, :destroy]
+  before_action :authorized, only: [:index, :show, :update, :destroy, :follow]
 
   ### USER RESTFUL START ###
   before_action :set_user, only: [:show, :update, :destroy]
@@ -57,6 +57,18 @@ class UsersController < ApplicationController
   end
 
   ### USER RESTFUL END ###
+
+  # GET /follow/1
+  # Access Token sahibi Current Userdir. Takip edecek kişidir.
+  # Takip edilecek kişi parametreden gelir.
+  def follow
+    @follow = Follow.create(
+      follower_id: @current_user.id,
+      followed_user_id: params[:id],
+      accepted: false
+    )
+    render json: @follow
+  end
 
   # Giriş Yap
   def login
@@ -132,7 +144,7 @@ class UsersController < ApplicationController
 
   # 15 dakika
   def new_access_token(user)
-    exp_time = Time.now + 60
+    exp_time = Time.now + 15*60
     token = JWT.encode({user_id: user.id, expiration: exp_time, type: "access_token"}, 's3cr3t')
   end
 

@@ -28,7 +28,7 @@ class ApplicationController < ActionController::API
             # Access token süresi geçerli
             # Kullanıcı bilgilere erişebilir
             user_id = decoded_token[0]['user_id']
-            @user = User.find_by(id: user_id)
+            @current_user = User.find_by(id: user_id)
           else 
             # Access token süresi bitmiş
             # Kullanıcı bilgilere erişemez
