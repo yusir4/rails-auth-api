@@ -1,2 +1,0 @@
-class BlackList < ApplicationRecord
-end
