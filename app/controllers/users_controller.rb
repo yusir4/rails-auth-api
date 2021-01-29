@@ -1,5 +1,7 @@
 class UsersController < ApplicationController
 
+  before_action :authorized, only: [:index, :show, :update, :destroy]
+
   ### USER RESTFUL START ###
   before_action :set_user, only: [:show, :update, :destroy]
 
@@ -130,7 +132,7 @@ class UsersController < ApplicationController
 
   # 15 dakika
   def new_access_token(user)
-    exp_time = Time.now + 15*60
+    exp_time = Time.now + 60
     token = JWT.encode({user_id: user.id, expiration: exp_time, type: "access_token"}, 's3cr3t')
   end
 
