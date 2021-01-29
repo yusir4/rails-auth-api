@@ -1,0 +1,9 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  jwt: MyString
+  expiration: 2021-01-29 13:26:24
+
+two:
+  jwt: MyString
+  expiration: 2021-01-29 13:26:24
