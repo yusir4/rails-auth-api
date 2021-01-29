@@ -32,13 +32,20 @@ class ApplicationController < ActionController::API
           else 
             # Access token süresi bitmiş
             # Kullanıcı bilgilere erişemez
-            render json: { message: 'Access Token Süresi doldu yeni alın.' }
+            render json: {
+              status: "error",
+              message: "Access Token Süresi doldu."
+            }, status: :unauthorized
+      
           end
       end
     end
   
     def authorized
-      render json: { message: 'Access Token Giriniz.' }, status: :unauthorized unless logged_in?
+      render json: {
+        status: "error",
+        message: "Access Token Giriniz."
+      }, status: :unauthorized unless logged_in?
     end
 
 end

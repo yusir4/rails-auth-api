@@ -8,16 +8,28 @@ class UsersController < ApplicationController
   # GET /users/
   def index
     @users = User.select("id, name, surname, email").all
-    render json: @users
+    render json: { 
+      status: "success",
+      data: {
+        users: @users
+      },
+      message: 'Kullanıcılar başarılı bir şekilde listelendi.'
+    }
   end
 
   # GET /users/1
   def show
     render json: { 
-      name: @user.name,
-      surname: @user.surname,
-      email: @user.email
-      }
+      status: "success",
+      data: {
+        user: { 
+          name: @user.name,
+          surname: @user.surname,
+          email: @user.email
+        }
+      },
+      message: 'Kullanıcı başarılı bir şekilde listelendi.'
+    }
   end
 
   # POST /users/1
@@ -27,33 +39,63 @@ class UsersController < ApplicationController
   def create
     existing_user = User.find_by(email: params[:email])
     if existing_user
-      render json: {error: "Kullanıcı Zaten Kayıtlı."}
+      render json: {
+        status: "error",
+        data: {
+          user: { 
+            name: existing_user.name,
+            surname: existing_user.surname,
+            email: existing_user.email
+            }
+        },
+        message: 'Kullanıcı zaten kayıtlı.'
+      } 
     else
       @user = User.create(user_params)
       if @user.valid?
         render json: { 
-          name: @user.name,
-          surname: @user.surname,
-          email: @user.email
-          }
+          status: "success",
+          data: {
+            user: { 
+              name: @user.name,
+              surname: @user.surname,
+              email: @user.email
+            }
+          },
+          message: 'Kullanıcı başarılı bir şekilde kayıtlandı.'
+        }
       else
-        render json: {error: "Geçersiz İşlem."}
+        render json: {
+          status: "error",
+          message: @user.errors
+        }
       end
     end
   end
 
   # PATCH/PUT /users/1
   def update
-      if @user.update(user_params)
-        render json: {error: "Başarılı bir şekilde güncellendi."}
-      else
-        render json: {error: "İşlem başarısız."}
-      end
+    @user.update(user_params)
+      render json: { 
+        status: "success",
+        data: {
+          user: { 
+            name: @user.name,
+            surname: @user.surname,
+            email: @user.email
+          }
+        },
+        message: 'Kullanıcı başarılı bir şekilde güncellendi.'
+      }
   end
 
   # DELETE /users/1
   def destroy
     @user.destroy
+    render json: { 
+      status: "success",
+      message: 'Kullanıcı başarılı bir şekilde silindi.'
+    }
   end
 
   ### USER RESTFUL END ###
@@ -62,12 +104,30 @@ class UsersController < ApplicationController
   # Access Token sahibi Current Userdir. Takip edecek kişidir.
   # Takip edilecek kişi parametreden gelir.
   def follow
+    follower = @current_user
+    followed_user = User.find(params[:id])
+  
     @follow = Follow.create(
-      follower_id: @current_user.id,
-      followed_user_id: params[:id],
+      follower_id: follower.id,
+      followed_user_id: followed_user.id,
       accepted: false
     )
-    render json: @follow
+    render json: { 
+      status: "success",
+      data: {
+        follower: { 
+          name: @current_user.name,
+          surname: @current_user.surname,
+          email: @current_user.email
+        },
+        followed_user: { 
+          name: followed_user.name,
+          surname: followed_user.surname,
+          email: followed_user.email
+        }
+      },
+      message: 'Başarılı bir şekilde istek gönderildi.'
+    }
   end
 
   # Giriş Yap
@@ -77,22 +137,43 @@ class UsersController < ApplicationController
       @user = User.find_by(email: params[:email])
       if @user && @user.authenticate(params[:password])
         refresh_token_control(@user)
-        render json: {refresh_token: @user.refresh_token}
+        render json: {
+          status: "success",
+          data: {
+            refresh_token: @user.refresh_token
+          },
+          message: "Başarılı bir şekilde refresh token oluşturuldu."
+        }
       else
-        render json: {error: "Email veya şifre hatalıdır."}
+        render json: {
+          status: "error",
+          message: "Email veya şifre hatalıdır."
+        }
       end
     elsif params[:refresh_token]
       # Refresh Token parametresi geldiyse access_token döndür.
       @user = User.find_by(refresh_token: params[:refresh_token])
       if @user
         access_token_control(@user)
-        render json: {access_token: @user.access_token}
+        render json: {
+          status: "success",
+          data: {
+            access_token: @user.access_token
+          },
+          message: "Başarılı bir şekilde access token oluşturuldu."
+        }
       else
-        render json: {error: "Refresh Token hatalıdır.."}
+        render json: {
+          status: "error",
+          message: "Refresh Token hatalıdır."
+        }
       end
     else 
       # Email veya Refresh Token yoksa hata bildir.
-      render json: {error: "Email veya Refresh Token eksik."}
+      render json: {
+        status: "error",
+        message: "Email veya Refresh Token eksik."
+      }
     end
   end
 
@@ -154,16 +235,14 @@ class UsersController < ApplicationController
       begin
         @user = User.find(params[:id])
       rescue ActiveRecord::RecordNotFound
-        render json: {error: "Böyle bir kayıt bulunamadı."}
-      rescue ActiveRecord::ActiveRecordError
-        render json: {error: "Veritabanı hatası."}
-      rescue Exception
-        render json: {error: "Beklenmeyen hata."}
-        raise
+        render json: {
+          status: "error",
+          message: "Böyle bir kayıt bulunamadı."
+        }
     end
       
     end
     def user_params
-      params.require(:user).permit(:name, :surname, :email, :refresh_token, :access_token, :password)
+      params.permit(:name, :surname, :email, :refresh_token, :access_token, :password)
     end
 end
